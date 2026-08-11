@@ -7,15 +7,7 @@ import {
   Mail, Phone, MessageCircle, ArrowUp, ChevronDown, ShieldCheck, Landmark,
   Facebook, Instagram, CheckCircle2, ArrowRight,
 } from "lucide-react";
-import emailjs from "@emailjs/browser";
 import elisabeteImg from "../assets/elisabete-rocha.jpg";
-import logo from "../assets/logo.png";
-import { Link } from "@tanstack/react-router";
-
-// ✅ CORREÇÃO: EmailJS inicializado corretamente
-emailjs.init({
-  publicKey: "n-sdHLVfqow5BJ8Yw",
-});
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -24,7 +16,6 @@ export const Route = createFileRoute("/")({
 const WHATSAPP_URL = "https://wa.me/351912230198";
 const PHONE = "+351 912 230 198";
 const EMAIL = "elisabete@ecrcredito.pt";
-const TEST_EMAIL = "mr.danix2003@gmail.com";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 28 },
@@ -63,78 +54,49 @@ function Index() {
   }, []);
 
   // Simulator state
-  const [amount, setAmount] = useState(125_000);
-  const [years, setYears] = useState(30);
-  const FIXED_RATE = 2.7;
+  const [creditType, setCreditType] = useState<"habitacao" | "pessoal">("habitacao");
+  const CONFIG = {
+    habitacao: { rate: 2.7, min: 25_000, max: 500_000, step: 1_000, minYears: 5, maxYears: 40, defAmount: 125_000, defYears: 30, formTipo: "Crédito Habitação" },
+    pessoal: { rate: 6.9, min: 1_000, max: 75_000, step: 500, minYears: 1, maxYears: 10, defAmount: 15_000, defYears: 7, formTipo: "Consumo" },
+  } as const;
+  const cfg = CONFIG[creditType];
+  const rate = cfg.rate;
+  const [amount, setAmount] = useState<number>(CONFIG.habitacao.defAmount);
+  const [years, setYears] = useState<number>(CONFIG.habitacao.defYears);
+
+  const switchType = (t: "habitacao" | "pessoal") => {
+    setCreditType(t);
+    setAmount(CONFIG[t].defAmount);
+    setYears(CONFIG[t].defYears);
+  };
 
   const { monthly, totalInterest, totalPaid } = useMemo(() => {
     const n = years * 12;
-    const i = FIXED_RATE / 100 / 12;
+    const i = rate / 100 / 12;
     const m = i === 0 ? amount / n : (amount * i) / (1 - Math.pow(1 + i, -n));
     const total = m * n;
     return { monthly: m, totalInterest: total - amount, totalPaid: total };
-  }, [amount, years]);
+  }, [amount, years, rate]);
 
   // Form
   const [form, setForm] = useState({
     nome: "", telefone: "", email: "",
     tipo: "Crédito Habitação",
-    valor: 125_000, prazo: 30, taxa: FIXED_RATE, rendimento: "", observacoes: "",
+    valor: 125_000, prazo: 30, rendimento: "", observacoes: "",
     aceito: false,
   });
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const prefillFromSimulator = () => {
-    setForm(f => ({ ...f, valor: amount, prazo: years, taxa: FIXED_RATE }));
+    setForm(f => ({ ...f, valor: amount, prazo: years, tipo: cfg.formTipo }));
     document.getElementById("pedido")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.aceito) return;
-
-    setLoading(true);
-    setError("");
-
-    try {
-      // ✅ Enviar email com EmailJS
-      await emailjs.send(
-        "service_swtmqmt",
-        "template_ah9l4ox",
-        {
-          from_name: form.nome,
-          from_email: form.email,
-          phone: form.telefone,
-          credit_type: form.tipo,
-          amount: fmtEUR(form.valor),
-          term: `${form.prazo} anos`,
-          rate: `${form.taxa}%`,
-          monthly_income: form.rendimento || "Não informado",
-          observations: form.observacoes || "Nenhuma",
-          submission_date: new Date().toLocaleDateString("pt-PT"),
-        }
-      );
-
-      setSubmitted(true);
-      setLoading(false);
-      setForm({
-        nome: "", telefone: "", email: "",
-        tipo: "Crédito Habitação",
-        valor: 125_000, prazo: 30, taxa: FIXED_RATE, rendimento: "", observacoes: "",
-        aceito: false,
-      });
-
-      // Resetar após 5 segundos
-      setTimeout(() => {
-        setSubmitted(false);
-      }, 5000);
-    } catch (err) {
-      console.error("Erro ao enviar email:", err);
-      setError("Erro ao enviar o formulário. Tente novamente.");
-      setLoading(false);
-    }
+    // Placeholder submission (integrate EmailJS / Formspree later)
+    setSubmitted(true);
   };
 
   const navLinks = [
@@ -157,12 +119,9 @@ function Index() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-black/5 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <a href="#top">
-            <img
-              src={logo}
-              alt="ECR Crédito"
-              className="h-16 w-auto"
-            />
+          <a href="#top" className="flex items-baseline gap-2">
+            <span className="text-xl font-extrabold tracking-tight text-[color:var(--color-brand-navy)]">ECR</span>
+            <span className="text-xl font-light tracking-[0.25em] text-[color:var(--color-brand-gold)]">CRÉDITO</span>
           </a>
           <nav className="hidden items-center gap-8 md:flex">
             {navLinks.map(l => (
@@ -304,7 +263,7 @@ function Index() {
               { icon: HomeIcon, title: "Crédito Habitação", text: "Financie a compra ou construção da sua casa com as melhores condições." },
               { icon: Repeat, title: "Transferência de Crédito Habitação", text: "Reduza a sua prestação transferindo para outro banco." },
               { icon: TrendingDown, title: "Crédito Consolidado", text: "Junte vários créditos num só e alivie o orçamento mensal." },
-              { icon: CreditCard, title: "Crédito ao Consumo", text: "Financiamento para projetos pessoais, viagens ou compras." },
+              { icon: CreditCard, title: "Crédito ao Consumo", text: "Financiamento pessoal, automóvel ou obras em casa." },
               { icon: FileSearch, title: "Análise Gratuita", text: "Estudo detalhado da sua situação, sem custos e sem compromisso." },
               { icon: Handshake, title: "Acompanhamento Personalizado", text: "Desde a simulação à escritura — sempre ao seu lado." },
             ].map(({ icon: Icon, title, text }) => (
@@ -336,6 +295,24 @@ function Index() {
             <div className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--color-brand-gold)]">Simulador</div>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">Simule o seu financiamento</h2>
             <p className="mt-4 text-white/70">Ajuste os valores e veja a estimativa em tempo real. Sem compromisso.</p>
+            <div className="mx-auto mt-8 inline-flex rounded-full bg-white/10 p-1 ring-1 ring-white/15">
+              {([
+                { key: "habitacao", label: "Crédito Habitação" },
+                { key: "pessoal", label: "Crédito Pessoal" },
+              ] as const).map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => switchType(t.key)}
+                  className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                    creditType === t.key
+                      ? "bg-[color:var(--color-brand-gold)] text-[color:var(--color-brand-navy)]"
+                      : "text-white/70 hover:text-white"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </motion.div>
 
           <div className="mt-12 grid gap-8 lg:grid-cols-5">
@@ -343,9 +320,9 @@ function Index() {
               <SliderField
                 label="Valor do financiamento"
                 value={amount}
-                min={5_000}
-                max={500_000}
-                step={1_000}
+                min={cfg.min}
+                max={cfg.max}
+                step={cfg.step}
                 onChange={setAmount}
                 display={fmtEUR(amount)}
               />
@@ -353,21 +330,17 @@ function Index() {
                 <SliderField
                   label="Prazo"
                   value={years}
-                  min={5}
-                  max={40}
+                  min={cfg.minYears}
+                  max={cfg.maxYears}
                   step={1}
                   onChange={setYears}
                   display={`${years} anos`}
                 />
               </div>
-              <div className="mt-8">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-widest text-white/60">Taxa de juro</span>
-                  <span className="text-3xl font-extrabold text-[color:var(--color-brand-gold)] md:text-4xl">{FIXED_RATE.toFixed(1)}%</span>
-                </div>
-                <p className="mt-3 text-sm text-white/50">Taxa fixa atual de {FIXED_RATE.toFixed(1)}% (TAN).</p>
+              <div className="mt-8 flex items-center justify-between rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10">
+                <span className="text-sm text-white/70">Taxa de juro (fixa)</span>
+                <span className="text-lg font-bold text-[color:var(--color-brand-gold)]">{rate.toFixed(1)}%</span>
               </div>
-
               <button
                 onClick={prefillFromSimulator}
                 className="mt-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-gold)] px-6 py-4 text-sm font-semibold text-[color:var(--color-brand-navy)] shadow-lg shadow-[color:var(--color-brand-gold)]/30 transition hover:-translate-y-0.5 hover:bg-[color:var(--color-brand-gold-soft)]"
@@ -431,8 +404,8 @@ function Index() {
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-600">
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
-                <h3 className="mt-6 text-2xl font-bold">Pedido recebido com sucesso!</h3>
-                <p className="mt-2 text-[color:var(--color-brand-navy)]/70">"Obrigado pelo seu interesse. Entraremos em contacto o mais brevemente possível."</p>
+                <h3 className="mt-6 text-2xl font-bold">Pedido recebido</h3>
+                <p className="mt-2 text-[color:var(--color-brand-navy)]/70">A sua análise será iniciada em breve.</p>
               </div>
             ) : (
               <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
@@ -448,7 +421,7 @@ function Index() {
                   </select>
                 </Field>
                 <Field label="Valor Pretendido (€)"><input type="number" value={form.valor} onChange={e => setForm({ ...form, valor: Number(e.target.value) })} className={inputCls} /></Field>
-                <Field label="Taxa de Juro (%)"><input type="number" readOnly value={form.taxa} className={`${inputCls} bg-black/5`} /></Field>
+                <Field label="Prazo (anos)"><input type="number" value={form.prazo} onChange={e => setForm({ ...form, prazo: Number(e.target.value) })} className={inputCls} /></Field>
                 <Field label="Rendimento Mensal (€)" full><input type="number" value={form.rendimento} onChange={e => setForm({ ...form, rendimento: e.target.value })} className={inputCls} /></Field>
                 <Field label="Observações" full>
                   <textarea rows={4} value={form.observacoes} onChange={e => setForm({ ...form, observacoes: e.target.value })} className={inputCls} />
@@ -457,14 +430,9 @@ function Index() {
                   <input type="checkbox" required checked={form.aceito} onChange={e => setForm({ ...form, aceito: e.target.checked })} className="mt-1 h-4 w-4 accent-[color:var(--color-brand-gold)]" />
                   Li e aceito a <a href="#rgpd" className="underline underline-offset-2">Política de Privacidade</a>.
                 </label>
-                {error && (
-                  <div className="md:col-span-2 rounded-lg bg-red-50 p-4 text-sm text-red-600">
-                    {error}
-                  </div>
-                )}
                 <div className="md:col-span-2">
-                  <button type="submit" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-navy)] px-6 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--color-brand-navy-soft)] disabled:opacity-50">
-                    {loading ? "Enviando..." : "Enviar Pedido"} <ArrowRight className="h-4 w-4" />
+                  <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-navy)] px-6 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--color-brand-navy-soft)]">
+                    Enviar Pedido <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
               </form>
@@ -484,17 +452,20 @@ function Index() {
           <ContactCard icon={Phone} title="Telefone" value={PHONE} href="tel:+351912230198" />
           <ContactCard icon={MessageCircle} title="WhatsApp" value="Abrir conversa" href={WHATSAPP_URL} external accent />
         </div>
+        <motion.p variants={fadeUp} className="mt-8 text-center text-sm text-[color:var(--color-brand-navy)]/70">
+          Atendimento online para todo o território nacional. Atendimento presencial apenas por marcação.
+        </motion.p>
         <motion.div variants={fadeUp} className="mt-10 overflow-hidden rounded-3xl shadow-lg ring-1 ring-black/5">
-  <iframe
-    title="Localização"
-    src="https://www.google.com/maps?q=Rio+de+Moinhos,+Penafiel&output=embed"
-    width="100%"
-    height="360"
-    loading="lazy"
-    referrerPolicy="no-referrer-when-downgrade"
-    className="block w-full border-0"
-  />
-</motion.div>
+          <iframe
+            title="Localização"
+            src="https://www.google.com/maps?q=Portugal&output=embed"
+            width="100%"
+            height="360"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="block w-full border-0"
+          />
+        </motion.div>
       </Section>
 
       {/* FAQ */}
@@ -529,11 +500,13 @@ function Index() {
             <p className="mt-2 text-sm text-[color:var(--color-brand-navy)]/60">Nos termos do Decreto-Lei nº 81-C/2017 de 7 de julho.</p>
           </LegalRow>
           <LegalRow title="Categoria">Intermediária de crédito vinculada.</LegalRow>
+          <LegalRow title="NIF">215735269</LegalRow>
           <LegalRow title="Mutuantes">
             <ul className="space-y-1">
               <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> NOVO BANCO</li>
               <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> BANCO SANTANDER TOTTA</li>
               <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> CAIXA GERAL DE DEPÓSITOS</li>
+              <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> BANKINTER</li>
             </ul>
           </LegalRow>
           <LegalRow title="Regime de exclusividade">Não.</LegalRow>
@@ -591,7 +564,7 @@ function Index() {
             <ul className="mt-4 space-y-2 text-sm">
               <li><a href="#servicos" className="hover:text-[color:var(--color-brand-gold)]">Serviços</a></li>
               <li><a href="#contactos" className="hover:text-[color:var(--color-brand-gold)]">Contactos</a></li>
-              <li><Link to="/politica-privacidade" className="hover:text-[color:var(--color-brand-gold)]">Política de Privacidade</Link></li>
+              <li><a href="#rgpd" className="hover:text-[color:var(--color-brand-gold)]">Política de Privacidade</a></li>
               <li><a href="https://www.livroreclamacoes.pt/Inicio/" target="_blank" rel="noreferrer" className="hover:text-[color:var(--color-brand-gold)]">Livro de Reclamações</a></li>
             </ul>
           </div>
@@ -599,10 +572,10 @@ function Index() {
             <h4 className="text-sm font-semibold uppercase tracking-widest text-white">Siga-nos</h4>
             <div className="mt-4 flex gap-3">
               {[
-                { icon: Facebook, href: "https://www.facebook.com/profile.php?id=100069896976304", label: "Facebook" },
-                { icon: Instagram, href: "https://www.instagram.com/ecr_credito/", label: "Instagram" },
-                { icon: MessageCircle, href: "https://wa.me/351912230198", label: "WhatsApp" },
-                { icon: Mail, href: "mailto:elisabete@ecrcredito.pt", label: "Email" },
+                { icon: Facebook, href: "#", label: "Facebook" },
+                { icon: Instagram, href: "#", label: "Instagram" },
+                { icon: MessageCircle, href: WHATSAPP_URL, label: "WhatsApp" },
+                { icon: Mail, href: `mailto:${EMAIL}`, label: "Email" },
               ].map(({ icon: Icon, href, label }) => (
                 <a key={label} href={href} aria-label={label} target="_blank" rel="noreferrer" className="grid h-10 w-10 place-items-center rounded-full bg-white/10 transition hover:bg-[color:var(--color-brand-gold)] hover:text-[color:var(--color-brand-navy)]">
                   <Icon className="h-4 w-4" />
@@ -612,7 +585,12 @@ function Index() {
           </div>
         </div>
         <div className="border-t border-white/10 py-6 text-center text-xs text-white/50">
-          © {new Date().getFullYear()} ECR Crédito — Intermediária de Crédito Vinculada · Reg. Banco de Portugal nº 8612
+          <p>
+            A ECR não concede crédito. Atua como intermediária de crédito vinculada, nos termos do Decreto-Lei nº 81-C/2017.
+          </p>
+          <p className="mt-2">
+            © {new Date().getFullYear()} ECR Crédito · NIF 215735269 · Reg. Banco de Portugal nº 8612
+          </p>
         </div>
       </footer>
 
