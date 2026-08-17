@@ -41,6 +41,21 @@ function fmtEUR(v: number) {
   return new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
 }
 
+const FINALIDADES = [
+  "Consolidação de Crédito",
+  "Veículo Novo",
+  "Veículo Usado",
+  "Veículo Elétrico Novo",
+  "Obras",
+  "Férias",
+  "Decorações e Mobiliário",
+  "Casamento",
+  "Educação",
+  "Energia Renovável",
+  "Saúde",
+  "Outros",
+] as const;
+
 function Index() {
   const [showTop, setShowTop] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -57,12 +72,13 @@ function Index() {
   const [creditType, setCreditType] = useState<"habitacao" | "pessoal">("habitacao");
   const CONFIG = {
     habitacao: { rate: 2.7, min: 25_000, max: 500_000, step: 1_000, minYears: 5, maxYears: 40, defAmount: 125_000, defYears: 30, formTipo: "Crédito Habitação" },
-    pessoal: { rate: 6.9, min: 1_000, max: 75_000, step: 500, minYears: 1, maxYears: 10, defAmount: 15_000, defYears: 7, formTipo: "Consumo" },
+    pessoal: { rate: 6.9, min: 1_000, max: 75_000, step: 500, minYears: 1, maxYears: 10, defAmount: 15_000, defYears: 7, formTipo: "Crédito Pessoal" },
   } as const;
   const cfg = CONFIG[creditType];
   const rate = cfg.rate;
   const [amount, setAmount] = useState<number>(CONFIG.habitacao.defAmount);
   const [years, setYears] = useState<number>(CONFIG.habitacao.defYears);
+  const [finalidade, setFinalidade] = useState<string>(FINALIDADES[0]);
 
   const switchType = (t: "habitacao" | "pessoal") => {
     setCreditType(t);
@@ -82,13 +98,19 @@ function Index() {
   const [form, setForm] = useState({
     nome: "", telefone: "", email: "",
     tipo: "Crédito Habitação",
-    valor: 125_000, prazo: 30, rendimento: "", observacoes: "",
+    valor: 125_000, prazo: 30, finalidade: FINALIDADES[0] as string, rendimento: "", observacoes: "",
     aceito: false,
   });
   const [submitted, setSubmitted] = useState(false);
 
   const prefillFromSimulator = () => {
-    setForm(f => ({ ...f, valor: amount, prazo: years, tipo: cfg.formTipo }));
+    setForm(f => ({
+      ...f,
+      valor: amount,
+      prazo: years,
+      tipo: cfg.formTipo,
+      ...(creditType === "pessoal" ? { finalidade } : {}),
+    }));
     document.getElementById("pedido")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -337,10 +359,26 @@ function Index() {
                   display={`${years} anos`}
                 />
               </div>
-              <div className="mt-8 flex items-center justify-between rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10">
-                <span className="text-sm text-white/70">Taxa de juro (fixa)</span>
-                <span className="text-lg font-bold text-[color:var(--color-brand-gold)]">{rate.toFixed(1)}%</span>
-              </div>
+              {creditType === "habitacao" ? (
+                <div className="mt-8 flex items-center justify-between rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10">
+                  <span className="text-sm text-white/70">Taxa de juro (fixa)</span>
+                  <span className="text-lg font-bold text-[color:var(--color-brand-gold)]">{rate.toFixed(1)}%</span>
+                </div>
+              ) : (
+                <div className="mt-8">
+                  <label className="mb-2 block text-sm font-medium text-white/70">Finalidade</label>
+                  <select
+                    value={finalidade}
+                    onChange={e => setFinalidade(e.target.value)}
+                    className="w-full rounded-2xl bg-white/5 px-5 py-4 text-sm font-semibold text-white ring-1 ring-white/15 outline-none transition focus:ring-[color:var(--color-brand-gold)]"
+                  >
+                    {FINALIDADES.map(f => (
+                      <option key={f} value={f} className="text-[color:var(--color-brand-navy)]">{f}</option>
+                    ))}
+                  </select>
+                  <p className="mt-3 text-xs text-white/50">Taxa sob consulta — definida pelo banco após análise. A estimativa apresentada é indicativa.</p>
+                </div>
+              )}
               <button
                 onClick={prefillFromSimulator}
                 className="mt-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-gold)] px-6 py-4 text-sm font-semibold text-[color:var(--color-brand-navy)] shadow-lg shadow-[color:var(--color-brand-gold)]/30 transition hover:-translate-y-0.5 hover:bg-[color:var(--color-brand-gold-soft)]"
@@ -351,12 +389,25 @@ function Index() {
             </motion.div>
 
             <motion.div variants={fadeUp} className="lg:col-span-2 space-y-4">
-              <ResultCard label="Prestação mensal estimada" value={fmtEUR(monthly)} highlight />
-              <ResultCard label="Total de juros" value={fmtEUR(totalInterest)} />
-              <ResultCard label="Total a pagar" value={fmtEUR(totalPaid)} />
-              <p className="text-xs leading-relaxed text-white/50">
-                Valores meramente indicativos, calculados com juros constantes. A proposta final depende da análise do banco.
-              </p>
+              {creditType === "habitacao" ? (
+                <>
+                  <ResultCard label="Prestação mensal estimada" value={fmtEUR(monthly)} highlight />
+                  <ResultCard label="Total de juros" value={fmtEUR(totalInterest)} />
+                  <ResultCard label="Total a pagar" value={fmtEUR(totalPaid)} />
+                  <p className="text-xs leading-relaxed text-white/50">
+                    Valores meramente indicativos, calculados com juros constantes. A proposta final depende da análise do banco.
+                  </p>
+                </>
+              ) : (
+                <div className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10">
+                  <p className="text-sm leading-relaxed text-white/80">
+                    No Crédito Pessoal a taxa de juro e a prestação mensal são definidas pelo banco após análise do pedido, consoante a finalidade e o perfil do cliente.
+                  </p>
+                  <p className="mt-3 text-xs text-white/50">
+                    Preencha o formulário para receber uma proposta personalizada sem compromisso.
+                  </p>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
@@ -417,9 +468,16 @@ function Index() {
                     <option>Crédito Habitação</option>
                     <option>Transferência</option>
                     <option>Consolidado</option>
-                    <option>Consumo</option>
+                    <option>Crédito Pessoal</option>
                   </select>
                 </Field>
+                {form.tipo === "Crédito Pessoal" && (
+                  <Field label="Finalidade" full>
+                    <select value={form.finalidade} onChange={e => setForm({ ...form, finalidade: e.target.value })} className={inputCls}>
+                      {FINALIDADES.map(f => <option key={f}>{f}</option>)}
+                    </select>
+                  </Field>
+                )}
                 <Field label="Valor Pretendido (€)"><input type="number" value={form.valor} onChange={e => setForm({ ...form, valor: Number(e.target.value) })} className={inputCls} /></Field>
                 <Field label="Prazo (anos)"><input type="number" value={form.prazo} onChange={e => setForm({ ...form, prazo: Number(e.target.value) })} className={inputCls} /></Field>
                 <Field label="Rendimento Mensal (€)" full><input type="number" value={form.rendimento} onChange={e => setForm({ ...form, rendimento: e.target.value })} className={inputCls} /></Field>
