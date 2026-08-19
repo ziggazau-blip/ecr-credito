@@ -16,6 +16,7 @@ export const Route = createFileRoute("/")({
 const WHATSAPP_URL = "https://wa.me/351912230198";
 const PHONE = "+351 912 230 198";
 const EMAIL = "elisabete@ecrcredito.pt";
+const FORM_TO = EMAIL; // destinatário dos pedidos do formulário
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 28 },
@@ -102,6 +103,8 @@ function Index() {
     aceito: false,
   });
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const prefillFromSimulator = () => {
     setForm(f => ({
@@ -114,11 +117,37 @@ function Index() {
     document.getElementById("pedido")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.aceito) return;
-    // Placeholder submission (integrate EmailJS / Formspree later)
-    setSubmitted(true);
+    if (!form.aceito || sending) return;
+    setSending(true);
+    setSendError(null);
+    try {
+      const res = await fetch(`https://formsubmit.co/ajax/${FORM_TO}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          _subject: `Novo pedido — ${form.tipo} — ${form.nome}`,
+          _template: "table",
+          _captcha: "false",
+          Nome: form.nome,
+          Telefone: form.telefone,
+          Email: form.email,
+          "Tipo de crédito": form.tipo,
+          ...(form.tipo === "Crédito Pessoal" ? { Finalidade: form.finalidade } : {}),
+          "Valor pretendido (€)": form.valor,
+          "Prazo (anos)": form.prazo,
+          "Rendimento mensal (€)": form.rendimento,
+          Observações: form.observacoes || "—",
+        }),
+      });
+      if (!res.ok) throw new Error("falhou");
+      setSubmitted(true);
+    } catch {
+      setSendError("Não foi possível enviar. Tente novamente ou contacte-nos por telefone/WhatsApp.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const navLinks = [
@@ -489,9 +518,10 @@ function Index() {
                   Li e aceito a <a href="#rgpd" className="underline underline-offset-2">Política de Privacidade</a>.
                 </label>
                 <div className="md:col-span-2">
-                  <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-navy)] px-6 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--color-brand-navy-soft)]">
-                    Enviar Pedido <ArrowRight className="h-4 w-4" />
+                  <button type="submit" disabled={sending} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-navy)] px-6 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--color-brand-navy-soft)] disabled:opacity-60">
+                    {sending ? "A enviar…" : "Enviar Pedido"} <ArrowRight className="h-4 w-4" />
                   </button>
+                  {sendError && <p className="mt-3 text-sm text-red-600">{sendError}</p>}
                 </div>
               </form>
             )}
