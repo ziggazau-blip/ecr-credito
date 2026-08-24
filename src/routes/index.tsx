@@ -57,6 +57,14 @@ const FINALIDADES = [
   "Outros",
 ] as const;
 
+// Indexantes Euribor (atualizar quando as taxas mudarem)
+const EURIBOR = {
+  "3M": { label: "Euribor 3 meses", value: 2.425 },
+  "6M": { label: "Euribor 6 meses", value: 2.647 },
+  "12M": { label: "Euribor 12 meses", value: 2.855 },
+} as const;
+const EURIBOR_REF = "Taxas médias de julho 2026";
+
 function Index() {
   const [showTop, setShowTop] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -76,10 +84,18 @@ function Index() {
     pessoal: { rate: 6.9, min: 1_000, max: 75_000, step: 500, minYears: 1, maxYears: 10, defAmount: 15_000, defYears: 7, formTipo: "Crédito Pessoal" },
   } as const;
   const cfg = CONFIG[creditType];
-  const rate = cfg.rate;
   const [amount, setAmount] = useState<number>(CONFIG.habitacao.defAmount);
   const [years, setYears] = useState<number>(CONFIG.habitacao.defYears);
   const [finalidade, setFinalidade] = useState<string>(FINALIDADES[0]);
+
+  // Taxa habitação: fixa ou variável (Euribor + spread)
+  const [taxaTipo, setTaxaTipo] = useState<"fixa" | "variavel">("fixa");
+  const [euriborKey, setEuriborKey] = useState<"3M" | "6M" | "12M">("12M");
+  const [spread, setSpread] = useState<number>(0.5);
+  const euriborRate = EURIBOR[euriborKey].value;
+  const tan = +(euriborRate + spread).toFixed(3);
+
+  const rate = creditType === "habitacao" && taxaTipo === "variavel" ? tan : cfg.rate;
 
   const switchType = (t: "habitacao" | "pessoal") => {
     setCreditType(t);
@@ -99,7 +115,7 @@ function Index() {
   const [form, setForm] = useState({
     nome: "", telefone: "", email: "",
     tipo: "Crédito Habitação",
-    valor: 125_000, prazo: 30, finalidade: FINALIDADES[0] as string, rendimento: "", observacoes: "",
+    valor: 125_000, prazo: 30, finalidade: FINALIDADES[0] as string, taxa: "", rendimento: "", observacoes: "",
     aceito: false,
   });
   const [submitted, setSubmitted] = useState(false);
@@ -112,6 +128,12 @@ function Index() {
       valor: amount,
       prazo: years,
       tipo: cfg.formTipo,
+      taxa:
+        creditType === "habitacao"
+          ? taxaTipo === "fixa"
+            ? `Fixa ${cfg.rate.toFixed(1)}%`
+            : `Variável — ${EURIBOR[euriborKey].label} (${euriborRate.toFixed(3)}%) + spread ${spread.toFixed(2)}% = TAN ${tan.toFixed(2)}%`
+          : "",
       ...(creditType === "pessoal" ? { finalidade } : {}),
     }));
     document.getElementById("pedido")?.scrollIntoView({ behavior: "smooth" });
@@ -135,6 +157,7 @@ function Index() {
           Email: form.email,
           "Tipo de crédito": form.tipo,
           ...(form.tipo === "Crédito Pessoal" ? { Finalidade: form.finalidade } : {}),
+          ...(form.taxa ? { "Tipo de taxa": form.taxa } : {}),
           "Valor pretendido (€)": form.valor,
           "Prazo (anos)": form.prazo,
           "Rendimento mensal (€)": form.rendimento,
@@ -389,9 +412,89 @@ function Index() {
                 />
               </div>
               {creditType === "habitacao" ? (
-                <div className="mt-8 flex items-center justify-between rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10">
-                  <span className="text-sm text-white/70">Taxa de juro (fixa)</span>
-                  <span className="text-lg font-bold text-[color:var(--color-brand-gold)]">{rate.toFixed(1)}%</span>
+                <div className="mt-8 space-y-4">
+                  <div>
+                    <span className="mb-2 block text-sm font-medium text-white/70">Tipo de taxa</span>
+                    <div className="inline-flex w-full rounded-2xl bg-white/5 p-1 ring-1 ring-white/10">
+                      {([
+                        { key: "fixa", label: "Fixa" },
+                        { key: "variavel", label: "Variável" },
+                      ] as const).map(t => (
+                        <button
+                          key={t.key}
+                          type="button"
+                          onClick={() => setTaxaTipo(t.key)}
+                          className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                            taxaTipo === t.key
+                              ? "bg-[color:var(--color-brand-gold)] text-[color:var(--color-brand-navy)]"
+                              : "text-white/70 hover:text-white"
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {taxaTipo === "fixa" ? (
+                    <div className="flex items-center justify-between rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10">
+                      <span className="text-sm text-white/70">Taxa de juro (fixa)</span>
+                      <span className="text-lg font-bold text-[color:var(--color-brand-gold)]">{cfg.rate.toFixed(1)}%</span>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+                      <label className="mb-2 block text-sm font-medium text-white/70">Indexante Euribor</label>
+                      <select
+                        value={euriborKey}
+                        onChange={e => setEuriborKey(e.target.value as "3M" | "6M" | "12M")}
+                        className="w-full rounded-xl bg-white/5 px-4 py-3 text-sm font-semibold text-white ring-1 ring-white/15 outline-none transition focus:ring-[color:var(--color-brand-gold)]"
+                      >
+                        {(["3M", "6M", "12M"] as const).map(k => (
+                          <option key={k} value={k} className="text-[color:var(--color-brand-navy)]">
+                            {EURIBOR[k].label} — {EURIBOR[k].value.toFixed(3)}%
+                          </option>
+                        ))}
+                      </select>
+
+                      <div className="mt-5 flex items-center justify-between">
+                        <span className="text-sm font-medium text-white/70">Spread</span>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setSpread(s => Math.max(0, +(s - 0.05).toFixed(2)))}
+                            className="h-8 w-8 rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                          >
+                            −
+                          </button>
+                          <span className="w-16 text-center text-base font-bold text-[color:var(--color-brand-gold)]">{spread.toFixed(2)}%</span>
+                          <button
+                            type="button"
+                            onClick={() => setSpread(s => Math.min(5, +(s + 0.05).toFixed(2)))}
+                            className="h-8 w-8 rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 grid grid-cols-3 gap-3 border-t border-white/10 pt-4">
+                        <div>
+                          <div className="text-xs uppercase tracking-wide text-white/50">{EURIBOR[euriborKey].label}</div>
+                          <div className="text-base font-bold text-[color:var(--color-brand-gold)]">{euriborRate.toFixed(3)}%</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wide text-white/50">TAN</div>
+                          <div className="text-base font-bold text-[color:var(--color-brand-gold)]">{tan.toFixed(2)}%</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wide text-white/50">TAN +1,5%</div>
+                          <div className="text-base font-bold text-[color:var(--color-brand-gold)]">{(tan + 1.5).toFixed(2)}%</div>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-xs text-white/50">TAN +1,5% — cenário de stress usado pelos bancos para testar a subida de taxas.</p>
+                      <p className="mt-3 text-xs text-white/50">{EURIBOR_REF}. A Euribor é revista periodicamente (3, 6 ou 12 meses), pelo que a prestação pode variar.</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="mt-8">
