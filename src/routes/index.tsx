@@ -242,10 +242,15 @@ function Index() {
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="order-2 md:order-1"
           >
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[color:var(--color-brand-gold)]/30 bg-white px-3 py-1 text-xs font-medium text-[color:var(--color-brand-gold)]">
+            <a
+              href="https://www.bportugal.pt/intermediarios-credito"
+              target="_blank"
+              rel="noreferrer"
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-[color:var(--color-brand-gold)]/30 bg-white px-3 py-1 text-xs font-medium text-[color:var(--color-brand-gold)] transition hover:border-[color:var(--color-brand-gold)]"
+            >
               <ShieldCheck className="h-3.5 w-3.5" />
               Registada no Banco de Portugal · nº 8612
-            </div>
+            </a>
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-[color:var(--color-brand-navy)] md:text-5xl lg:text-6xl">
               ECR Crédito
               <span className="mt-2 block text-lg font-medium tracking-[0.3em] text-[color:var(--color-brand-gold)] md:text-xl">
@@ -256,7 +261,10 @@ function Index() {
               Sou <strong>Elisabete Rocha</strong>, Intermediária de Crédito Vinculada, registada no Banco de Portugal sob o nº 8612.
             </p>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-[color:var(--color-brand-navy)]/70">
-              Acompanho clientes em todo o processo de obtenção de crédito, procurando as melhores soluções para cada situação. O meu serviço é <strong>totalmente gratuito</strong> e inclui acompanhamento personalizado desde o primeiro contacto até à assinatura.
+              Acompanho clientes em todo o processo de obtenção de crédito, procurando as melhores soluções para cada situação. <strong>O serviço de intermediação de crédito é gratuito por lei</strong> e inclui acompanhamento personalizado desde o primeiro contacto até à assinatura.
+            </p>
+            <p className="mt-3 max-w-xl text-xs leading-relaxed text-[color:var(--color-brand-navy)]/50">
+              A gratuitidade diz respeito apenas ao serviço de intermediação de crédito, não incluindo eventuais custos, comissões ou encargos associados ao contrato de crédito. Esta gratuitidade resulta de uma obrigação legal.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#pedido" className="group inline-flex items-center gap-2 rounded-full bg-[color:var(--color-brand-gold)] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[color:var(--color-brand-gold)]/25 transition hover:-translate-y-0.5 hover:bg-[color:var(--color-brand-gold-soft)]">
@@ -303,11 +311,11 @@ function Index() {
         </motion.div>
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { icon: Gift, title: "Serviço Gratuito", text: "Sem custos para o cliente em qualquer fase do processo." },
+            { icon: Gift, title: "Serviço Gratuito por Lei", text: "A intermediação de crédito é gratuita por obrigação legal. Custos do contrato de crédito, se existirem, são do banco." },
             { icon: UserCheck, title: "Atendimento Personalizado", text: "Um único ponto de contacto, sempre disponível." },
             { icon: Sparkles, title: "Processo Simples", text: "Reduzimos a burocracia e explicamos cada passo." },
             { icon: HandHeart, title: "Apoio do início ao fim", text: "Acompanhamento até à assinatura da escritura." },
-            { icon: Scale, title: "Comparação entre bancos", text: "Analisamos várias propostas para escolher a melhor." },
+            { icon: Scale, title: "Comparação entre bancos", text: "Apresentamos opções com base nas entidades mutuantes com quem temos acordo, para encontrar a melhor proposta." },
             { icon: Zap, title: "Resposta rápida", text: "Feedback e decisões em poucos dias úteis." },
           ].map(({ icon: Icon, title, text }) => (
             <motion.div
@@ -330,15 +338,18 @@ function Index() {
         <div className="mx-auto max-w-6xl px-5 py-20 md:py-28">
           <motion.div variants={fadeUp} className="mx-auto max-w-2xl text-center">
             <div className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--color-brand-gold)]">Serviços</div>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">Soluções de crédito adaptadas a si</h2>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">Intermediação de crédito adaptada a si</h2>
+            <p className="mt-4 text-[color:var(--color-brand-navy)]/70">
+              A ECR Crédito não concede crédito — faz <strong>intermediação de crédito</strong> junto das entidades mutuantes com quem tem acordo. O serviço de intermediação de crédito é <strong>gratuito por lei</strong>.
+            </p>
           </motion.div>
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { icon: HomeIcon, title: "Crédito Habitação", text: "Financie a compra ou construção da sua casa com as melhores condições." },
-              { icon: Repeat, title: "Transferência de Crédito Habitação", text: "Reduza a sua prestação transferindo para outro banco." },
-              { icon: TrendingDown, title: "Crédito Consolidado", text: "Junte vários créditos num só e alivie o orçamento mensal." },
-              { icon: CreditCard, title: "Crédito ao Consumo", text: "Financiamento pessoal, automóvel ou obras em casa." },
-              { icon: FileSearch, title: "Análise Gratuita", text: "Estudo detalhado da sua situação, sem custos e sem compromisso." },
+              { icon: HomeIcon, title: "Compra de Casa", text: "Intermediação de crédito habitação para a compra ou construção da sua casa." },
+              { icon: Repeat, title: "Transferência de Crédito Habitação", text: "Intermediação para transferir o seu crédito para outro banco e reduzir a prestação." },
+              { icon: TrendingDown, title: "Consolidação de Crédito", text: "Intermediação para juntar vários créditos num só e aliviar o orçamento mensal." },
+              { icon: CreditCard, title: "Crédito ao Consumo", text: "Intermediação de crédito pessoal, automóvel ou para obras em casa." },
+              { icon: FileSearch, title: "Análise Gratuita", text: "Estudo detalhado da sua situação — a intermediação de crédito é gratuita por lei." },
               { icon: Handshake, title: "Acompanhamento Personalizado", text: "Desde a simulação à escritura — sempre ao seu lado." },
             ].map(({ icon: Icon, title, text }) => (
               <motion.div
@@ -668,10 +679,10 @@ function Index() {
           </motion.div>
           <div className="mt-10 space-y-3">
             {[
-              { q: "O serviço é pago?", a: "Não. É totalmente gratuito para o cliente." },
+              { q: "O serviço é pago?", a: "Não. O serviço de intermediação de crédito é gratuito por lei. A gratuitidade diz respeito apenas à intermediação, não incluindo eventuais custos, comissões ou encargos associados ao contrato de crédito." },
               { q: "Quanto demora?", a: "Depende do processo, mas normalmente poucos dias úteis para a análise inicial." },
               { q: "Posso pedir só uma simulação?", a: "Sim. Pode pedir apenas uma simulação, sem qualquer compromisso." },
-              { q: "Trabalham com vários bancos?", a: "Sim. Comparamos propostas entre as instituições mutuantes com quem trabalhamos." },
+              { q: "Trabalham com vários bancos?", a: "Sim. Apresentamos opções com base nas entidades mutuantes com quem temos acordo, comparando as propostas disponíveis." },
             ].map((item, i) => (
               <FAQItem key={i} q={item.q} a={item.a} />
             ))}
@@ -687,7 +698,9 @@ function Index() {
         </motion.div>
         <motion.div variants={fadeUp} className="mt-10 grid gap-6 rounded-3xl border border-black/5 bg-white p-8 shadow-sm md:grid-cols-2 md:p-10">
           <LegalRow title="Estatuto">
-            <p>Intermediária de Crédito Vinculada. Registada no Banco de Portugal sob o nº <strong>8612</strong>.</p>
+            <p>Intermediária de Crédito Vinculada. Registada no Banco de Portugal sob o nº{" "}
+              <a href="https://www.bportugal.pt/intermediarios-credito" target="_blank" rel="noreferrer" className="font-bold text-[color:var(--color-brand-gold)] underline underline-offset-2 hover:text-[color:var(--color-brand-navy)]">8612</a>.
+            </p>
             <p className="mt-2 text-sm text-[color:var(--color-brand-navy)]/60">Nos termos do Decreto-Lei nº 81-C/2017 de 7 de julho.</p>
           </LegalRow>
           <LegalRow title="Categoria">Intermediária de crédito vinculada.</LegalRow>
@@ -711,7 +724,15 @@ function Index() {
             Validade: 08/10/2025 a 07/10/2026.
           </LegalRow>
           <LegalRow title="Resolução Alternativa de Litígios" full>
-            Em caso de litígio de consumo, o consumidor poderá recorrer ao <strong>CNIACC</strong> ou à <strong>TRIAVE</strong> para resolução alternativa de litígios.
+            <p>Em caso de litígio de consumo, o consumidor poderá recorrer às seguintes entidades de resolução alternativa de litígios:</p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <a href="https://www.cniacc.pt/pt/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-brand-navy)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--color-brand-navy)] transition hover:border-[color:var(--color-brand-gold)] hover:text-[color:var(--color-brand-gold)]">
+                CNIACC <ArrowRight className="h-3.5 w-3.5" />
+              </a>
+              <a href="https://www.triave.pt/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-brand-navy)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--color-brand-navy)] transition hover:border-[color:var(--color-brand-gold)] hover:text-[color:var(--color-brand-gold)]">
+                TRIAVE <ArrowRight className="h-3.5 w-3.5" />
+              </a>
+            </div>
           </LegalRow>
           <div className="md:col-span-2">
             <a
@@ -780,7 +801,8 @@ function Index() {
             A ECR não concede crédito. Atua como intermediária de crédito vinculada, nos termos do Decreto-Lei nº 81-C/2017.
           </p>
           <p className="mt-2">
-            © {new Date().getFullYear()} ECR Crédito · NIF 215735269 · Reg. Banco de Portugal nº 8612
+            © {new Date().getFullYear()} ECR Crédito · NIF 215735269 · Reg. Banco de Portugal nº{" "}
+            <a href="https://www.bportugal.pt/intermediarios-credito" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-[color:var(--color-brand-gold)]">8612</a>
           </p>
         </div>
       </footer>
