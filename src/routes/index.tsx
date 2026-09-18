@@ -660,7 +660,7 @@ function Index() {
         <motion.div variants={fadeUp} className="mt-10 overflow-hidden rounded-3xl shadow-lg ring-1 ring-black/5">
           <iframe
             title="Localização"
-            src="https://www.google.com/maps?q=Portugal&output=embed"
+            src="https://www.google.com/maps?q=Rio+de+Moinhos,+Penafiel,+Portugal&output=embed"
             width="100%"
             height="360"
             loading="lazy"
@@ -711,6 +711,7 @@ function Index() {
               <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> BANCO SANTANDER TOTTA</li>
               <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> CAIXA GERAL DE DEPÓSITOS</li>
               <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> BANKINTER</li>
+              <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> BBVA — INSTITUIÇÃO FINANCEIRA DE CRÉDITO, S.A.</li>
             </ul>
           </LegalRow>
           <LegalRow title="Regime de exclusividade">Não.</LegalRow>
