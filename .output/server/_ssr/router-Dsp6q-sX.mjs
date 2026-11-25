@@ -1,12 +1,11 @@
 import { a as __toESM } from "../_runtime.mjs";
 import { n as require_jsx_runtime, r as require_react, t as QueryClientProvider } from "../_libs/react+tanstack__react-query.mjs";
-import { c as HeadContent, d as Outlet, f as lazyRouteComponent, g as useRouter, h as Link, m as createRootRouteWithContext, p as createFileRoute, s as Scripts, u as createRouter } from "../_libs/@tanstack/react-router+[...].mjs";
+import { _ as createFileRoute, b as useRouter, d as Scripts, f as HeadContent, g as lazyRouteComponent, h as Outlet, m as createRouter, v as createRootRouteWithContext, y as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
-import { t as es_default } from "../_libs/emailjs__browser.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-DUZDEF8x.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-Dsp6q-sX.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-var styles_default = "/assets/styles-B9-sK3IL.css";
+var styles_default = "/assets/styles-YczXQ5_J.css";
 function reportLovableError(error, context = {}) {
 	if (typeof window === "undefined") return;
 	window.__lovableEvents?.captureException?.(error, {
@@ -164,29 +163,27 @@ function RootComponent() {
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Outlet, {})
 	});
 }
-var $$splitComponentImporter$1 = () => import("./politica-privacidade-B3Wi5qgq.mjs");
-var Route$1 = createFileRoute("/politica-privacidade")({
+var $$splitComponentImporter$1 = () => import("./routes-BUzElJTw.mjs");
+var Route$1 = createFileRoute("/")({ component: lazyRouteComponent($$splitComponentImporter$1, "component") });
+var $$splitComponentImporter = () => import("./politica-privacidade-B3Wi5qgq.mjs");
+var Route = createFileRoute("/politica-privacidade")({
 	head: () => ({ meta: [{ title: "Política de Privacidade | ECR Crédito" }, {
 		name: "description",
 		content: "Política de Privacidade da ECR Crédito — Elisabete Rocha, Intermediária de Crédito Vinculada registada no Banco de Portugal nº 8612."
 	}] }),
-	component: lazyRouteComponent($$splitComponentImporter$1, "component")
-});
-var $$splitComponentImporter = () => import("./routes-D1uc_v3k.mjs");
-es_default.init({ publicKey: "n-sdHLVfqow5BJ8Yw" });
-var Route = createFileRoute("/")({ component: lazyRouteComponent($$splitComponentImporter, "component") });
-var PoliticaPrivacidadeRoute = Route$1.update({
-	id: "/politica-privacidade",
-	path: "/politica-privacidade",
-	getParentRoute: () => Route$2
+	component: lazyRouteComponent($$splitComponentImporter, "component")
 });
 var rootRouteChildren = {
-	IndexRoute: Route.update({
+	IndexRoute: Route$1.update({
 		id: "/",
 		path: "/",
 		getParentRoute: () => Route$2
 	}),
-	PoliticaPrivacidadeRoute
+	PoliticaPrivacidadeRoute: Route.update({
+		id: "/politica-privacidade",
+		path: "/politica-privacidade",
+		getParentRoute: () => Route$2
+	})
 };
 var routeTree = Route$2._addFileChildren(rootRouteChildren)._addFileTypes();
 var getRouter = () => {

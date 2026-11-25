@@ -1,17 +1,15 @@
 import { a as __toESM } from "../_runtime.mjs";
 import { n as useScroll, r as motion, t as useSpring } from "../_libs/framer-motion.mjs";
 import { n as require_jsx_runtime, r as require_react } from "../_libs/react+tanstack__react-query.mjs";
-import { h as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { C as ArrowRight, S as ArrowUp, _ as FileSearch, a as ShieldCheck, b as CircleCheck, c as Phone, d as Landmark, f as Instagram, g as Gift, h as HandHeart, i as Sparkles, l as MessageCircle, m as Handshake, n as UserCheck, o as Scale, p as House, r as TrendingDown, s as Repeat, t as Zap, u as Mail, v as Facebook, x as ChevronDown, y as CreditCard } from "../_libs/lucide-react.mjs";
-import { t as es_default } from "../_libs/emailjs__browser.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-D1uc_v3k.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-BUzElJTw.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var elisabete_rocha_default = "/assets/elisabete-rocha-D5YEng4Y.jpg";
-var logo_default = "/assets/logo-Cn_5ewXm.png";
 var WHATSAPP_URL = "https://wa.me/351912230198";
 var PHONE = "+351 912 230 198";
 var EMAIL = "elisabete@ecrcredito.pt";
+var FORM_TO = EMAIL;
 var fadeUp = {
 	hidden: {
 		opacity: 0,
@@ -52,6 +50,35 @@ function fmtEUR(v) {
 		maximumFractionDigits: 0
 	}).format(v);
 }
+var FINALIDADES = [
+	"Consolidação de Crédito",
+	"Veículo Novo",
+	"Veículo Usado",
+	"Veículo Elétrico Novo",
+	"Obras",
+	"Férias",
+	"Decorações e Mobiliário",
+	"Casamento",
+	"Educação",
+	"Energia Renovável",
+	"Saúde",
+	"Outros"
+];
+var EURIBOR = {
+	"3M": {
+		label: "Euribor 3 meses",
+		value: 2.425
+	},
+	"6M": {
+		label: "Euribor 6 meses",
+		value: 2.647
+	},
+	"12M": {
+		label: "Euribor 12 meses",
+		value: 2.855
+	}
+};
+var EURIBOR_REF = "Taxas médias de julho 2026";
 function Index() {
 	const [showTop, setShowTop] = (0, import_react.useState)(false);
 	const [navOpen, setNavOpen] = (0, import_react.useState)(false);
@@ -66,19 +93,61 @@ function Index() {
 		window.addEventListener("scroll", onScroll, { passive: true });
 		return () => window.removeEventListener("scroll", onScroll);
 	}, []);
-	const [amount, setAmount] = (0, import_react.useState)(125e3);
-	const [years, setYears] = (0, import_react.useState)(30);
-	const FIXED_RATE = 2.7;
+	const [creditType, setCreditType] = (0, import_react.useState)("habitacao");
+	const CONFIG = {
+		habitacao: {
+			rate: 2.7,
+			min: 25e3,
+			max: 5e5,
+			step: 1e3,
+			minYears: 5,
+			maxYears: 40,
+			defAmount: 125e3,
+			defYears: 30,
+			formTipo: "Crédito Habitação"
+		},
+		pessoal: {
+			rate: 6.9,
+			min: 1e3,
+			max: 75e3,
+			step: 500,
+			minYears: 1,
+			maxYears: 10,
+			defAmount: 15e3,
+			defYears: 7,
+			formTipo: "Crédito Pessoal"
+		}
+	};
+	const cfg = CONFIG[creditType];
+	const [amount, setAmount] = (0, import_react.useState)(CONFIG.habitacao.defAmount);
+	const [years, setYears] = (0, import_react.useState)(CONFIG.habitacao.defYears);
+	const [finalidade, setFinalidade] = (0, import_react.useState)(FINALIDADES[0]);
+	const [taxaTipo, setTaxaTipo] = (0, import_react.useState)("fixa");
+	const [euriborKey, setEuriborKey] = (0, import_react.useState)("12M");
+	const [spread, setSpread] = (0, import_react.useState)(.5);
+	const euriborRate = EURIBOR[euriborKey].value;
+	const tan = +(euriborRate + spread).toFixed(3);
+	const rate = creditType === "habitacao" && taxaTipo === "variavel" ? tan : cfg.rate;
+	const switchType = (t) => {
+		setCreditType(t);
+		setAmount(CONFIG[t].defAmount);
+		setYears(CONFIG[t].defYears);
+	};
 	const { monthly, totalInterest, totalPaid } = (0, import_react.useMemo)(() => {
 		const n = years * 12;
-		const m = amount * (FIXED_RATE / 100 / 12) / (1 - Math.pow(1.00225, -n));
+		const i = rate / 100 / 12;
+		const m = i === 0 ? amount / n : amount * i / (1 - Math.pow(1 + i, -n));
 		const total = m * n;
 		return {
 			monthly: m,
 			totalInterest: total - amount,
 			totalPaid: total
 		};
-	}, [amount, years]);
+	}, [
+		amount,
+		years,
+		rate
+	]);
 	const [form, setForm] = (0, import_react.useState)({
 		nome: "",
 		telefone: "",
@@ -86,62 +155,59 @@ function Index() {
 		tipo: "Crédito Habitação",
 		valor: 125e3,
 		prazo: 30,
-		taxa: FIXED_RATE,
+		finalidade: FINALIDADES[0],
+		taxa: "",
 		rendimento: "",
 		observacoes: "",
 		aceito: false
 	});
 	const [submitted, setSubmitted] = (0, import_react.useState)(false);
-	const [loading, setLoading] = (0, import_react.useState)(false);
-	const [error, setError] = (0, import_react.useState)("");
+	const [sending, setSending] = (0, import_react.useState)(false);
+	const [sendError, setSendError] = (0, import_react.useState)(null);
 	const prefillFromSimulator = () => {
 		setForm((f) => ({
 			...f,
 			valor: amount,
 			prazo: years,
-			taxa: FIXED_RATE
+			tipo: cfg.formTipo,
+			taxa: creditType === "habitacao" ? taxaTipo === "fixa" ? `Fixa ${cfg.rate.toFixed(1)}%` : `Variável — ${EURIBOR[euriborKey].label} (${euriborRate.toFixed(3)}%) + spread ${spread.toFixed(2)}% = TAN ${tan.toFixed(2)}%` : "",
+			...creditType === "pessoal" ? { finalidade } : {}
 		}));
 		document.getElementById("pedido")?.scrollIntoView({ behavior: "smooth" });
 	};
 	const submit = async (e) => {
 		e.preventDefault();
-		if (!form.aceito) return;
-		setLoading(true);
-		setError("");
+		if (!form.aceito || sending) return;
+		setSending(true);
+		setSendError(null);
 		try {
-			await es_default.send("service_swtmqmt", "template_ah9l4ox", {
-				from_name: form.nome,
-				from_email: form.email,
-				phone: form.telefone,
-				credit_type: form.tipo,
-				amount: fmtEUR(form.valor),
-				term: `${form.prazo} anos`,
-				rate: `${form.taxa}%`,
-				monthly_income: form.rendimento || "Não informado",
-				observations: form.observacoes || "Nenhuma",
-				submission_date: (/* @__PURE__ */ new Date()).toLocaleDateString("pt-PT")
-			});
+			if (!(await fetch(`https://formsubmit.co/ajax/${FORM_TO}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "application/json"
+				},
+				body: JSON.stringify({
+					_subject: `Novo pedido — ${form.tipo} — ${form.nome}`,
+					_template: "table",
+					_captcha: "false",
+					Nome: form.nome,
+					Telefone: form.telefone,
+					Email: form.email,
+					"Tipo de crédito": form.tipo,
+					...form.tipo === "Crédito Pessoal" ? { Finalidade: form.finalidade } : {},
+					...form.taxa ? { "Tipo de taxa": form.taxa } : {},
+					"Valor pretendido (€)": form.valor,
+					"Prazo (anos)": form.prazo,
+					"Rendimento mensal (€)": form.rendimento,
+					Observações: form.observacoes || "—"
+				})
+			})).ok) throw new Error("falhou");
 			setSubmitted(true);
-			setLoading(false);
-			setForm({
-				nome: "",
-				telefone: "",
-				email: "",
-				tipo: "Crédito Habitação",
-				valor: 125e3,
-				prazo: 30,
-				taxa: FIXED_RATE,
-				rendimento: "",
-				observacoes: "",
-				aceito: false
-			});
-			setTimeout(() => {
-				setSubmitted(false);
-			}, 5e3);
-		} catch (err) {
-			console.error("Erro ao enviar email:", err);
-			setError("Erro ao enviar o formulário. Tente novamente.");
-			setLoading(false);
+		} catch {
+			setSendError("Não foi possível enviar. Tente novamente ou contacte-nos por telefone/WhatsApp.");
+		} finally {
+			setSending(false);
 		}
 	};
 	const navLinks = [
@@ -182,13 +248,16 @@ function Index() {
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "mx-auto flex max-w-6xl items-center justify-between px-5 py-4",
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
 							href: "#top",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-								src: logo_default,
-								alt: "ECR Crédito",
-								className: "h-16 w-auto"
-							})
+							className: "flex items-baseline gap-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-xl font-extrabold tracking-tight text-[color:var(--color-brand-navy)]",
+								children: "ECR"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-xl font-light tracking-[0.25em] text-[color:var(--color-brand-gold)]",
+								children: "CRÉDITO"
+							})]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
 							className: "hidden items-center gap-8 md:flex",
@@ -258,8 +327,11 @@ function Index() {
 							},
 							className: "order-2 md:order-1",
 							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "mb-4 inline-flex items-center gap-2 rounded-full border border-[color:var(--color-brand-gold)]/30 bg-white px-3 py-1 text-xs font-medium text-[color:var(--color-brand-gold)]",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+									href: "https://www.bportugal.pt/intermediarios-credito",
+									target: "_blank",
+									rel: "noreferrer",
+									className: "mb-4 inline-flex items-center gap-2 rounded-full border border-[color:var(--color-brand-gold)]/30 bg-white px-3 py-1 text-xs font-medium text-[color:var(--color-brand-gold)] transition hover:border-[color:var(--color-brand-gold)]",
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShieldCheck, { className: "h-3.5 w-3.5" }), "Registada no Banco de Portugal · nº 8612"]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h1", {
@@ -280,10 +352,14 @@ function Index() {
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 									className: "mt-4 max-w-xl text-base leading-relaxed text-[color:var(--color-brand-navy)]/70",
 									children: [
-										"Acompanho clientes em todo o processo de obtenção de crédito, procurando as melhores soluções para cada situação. O meu serviço é ",
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "totalmente gratuito" }),
+										"Acompanho clientes em todo o processo de obtenção de crédito, procurando as melhores soluções para cada situação. ",
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "O serviço de intermediação de crédito é gratuito por lei" }),
 										" e inclui acompanhamento personalizado desde o primeiro contacto até à assinatura."
 									]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-3 max-w-xl text-xs leading-relaxed text-[color:var(--color-brand-navy)]/50",
+									children: "A gratuitidade diz respeito apenas ao serviço de intermediação de crédito, não incluindo eventuais custos, comissões ou encargos associados ao contrato de crédito. Esta gratuitidade resulta de uma obrigação legal."
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 									className: "mt-8 flex flex-wrap gap-3",
@@ -371,8 +447,8 @@ function Index() {
 					children: [
 						{
 							icon: Gift,
-							title: "Serviço Gratuito",
-							text: "Sem custos para o cliente em qualquer fase do processo."
+							title: "Serviço Gratuito por Lei",
+							text: "A intermediação de crédito é gratuita por obrigação legal. Custos do contrato de crédito, se existirem, são do banco."
 						},
 						{
 							icon: UserCheck,
@@ -392,7 +468,7 @@ function Index() {
 						{
 							icon: Scale,
 							title: "Comparação entre bancos",
-							text: "Analisamos várias propostas para escolher a melhor."
+							text: "Apresentamos opções com base nas entidades mutuantes com quem temos acordo, para encontrar a melhor proposta."
 						},
 						{
 							icon: Zap,
@@ -427,40 +503,53 @@ function Index() {
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(motion.div, {
 						variants: fadeUp,
 						className: "mx-auto max-w-2xl text-center",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-							className: "text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--color-brand-gold)]",
-							children: "Serviços"
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-							className: "mt-3 text-3xl font-extrabold tracking-tight md:text-4xl",
-							children: "Soluções de crédito adaptadas a si"
-						})]
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--color-brand-gold)]",
+								children: "Serviços"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+								className: "mt-3 text-3xl font-extrabold tracking-tight md:text-4xl",
+								children: "Intermediação de crédito adaptada a si"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-4 text-[color:var(--color-brand-navy)]/70",
+								children: [
+									"A ECR Crédito não concede crédito — faz ",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "intermediação de crédito" }),
+									" junto das entidades mutuantes com quem tem acordo. O serviço de intermediação de crédito é ",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "gratuito por lei" }),
+									"."
+								]
+							})
+						]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 						className: "mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3",
 						children: [
 							{
 								icon: House,
-								title: "Crédito Habitação",
-								text: "Financie a compra ou construção da sua casa com as melhores condições."
+								title: "Compra de Casa",
+								text: "Intermediação de crédito habitação para a compra ou construção da sua casa."
 							},
 							{
 								icon: Repeat,
 								title: "Transferência de Crédito Habitação",
-								text: "Reduza a sua prestação transferindo para outro banco."
+								text: "Intermediação para transferir o seu crédito para outro banco e reduzir a prestação."
 							},
 							{
 								icon: TrendingDown,
-								title: "Crédito Consolidado",
-								text: "Junte vários créditos num só e alivie o orçamento mensal."
+								title: "Consolidação de Crédito",
+								text: "Intermediação para juntar vários créditos num só e aliviar o orçamento mensal."
 							},
 							{
 								icon: CreditCard,
 								title: "Crédito ao Consumo",
-								text: "Financiamento para projetos pessoais, viagens ou compras."
+								text: "Intermediação de crédito pessoal, automóvel ou para obras em casa."
 							},
 							{
 								icon: FileSearch,
 								title: "Análise Gratuita",
-								text: "Estudo detalhado da sua situação, sem custos e sem compromisso."
+								text: "Estudo detalhado da sua situação — a intermediação de crédito é gratuita por lei."
 							},
 							{
 								icon: Handshake,
@@ -512,6 +601,20 @@ function Index() {
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 								className: "mt-4 text-white/70",
 								children: "Ajuste os valores e veja a estimativa em tempo real. Sem compromisso."
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "mx-auto mt-8 inline-flex rounded-full bg-white/10 p-1 ring-1 ring-white/15",
+								children: [{
+									key: "habitacao",
+									label: "Crédito Habitação"
+								}, {
+									key: "pessoal",
+									label: "Crédito Pessoal"
+								}].map((t) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									onClick: () => switchType(t.key),
+									className: `rounded-full px-5 py-2.5 text-sm font-semibold transition ${creditType === t.key ? "bg-[color:var(--color-brand-gold)] text-[color:var(--color-brand-navy)]" : "text-white/70 hover:text-white"}`,
+									children: t.label
+								}, t.key))
 							})
 						]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -523,9 +626,9 @@ function Index() {
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SliderField, {
 									label: "Valor do financiamento",
 									value: amount,
-									min: 5e3,
-									max: 5e5,
-									step: 1e3,
+									min: cfg.min,
+									max: cfg.max,
+									step: cfg.step,
 									onChange: setAmount,
 									display: fmtEUR(amount)
 								}),
@@ -534,32 +637,152 @@ function Index() {
 									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SliderField, {
 										label: "Prazo",
 										value: years,
-										min: 5,
-										max: 40,
+										min: cfg.minYears,
+										max: cfg.maxYears,
 										step: 1,
 										onChange: setYears,
 										display: `${years} anos`
 									})
 								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "mt-8",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "flex items-baseline justify-between",
+								creditType === "habitacao" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "mt-8 space-y-4",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "mb-2 block text-sm font-medium text-white/70",
+										children: "Tipo de taxa"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "inline-flex w-full rounded-2xl bg-white/5 p-1 ring-1 ring-white/10",
+										children: [{
+											key: "fixa",
+											label: "Fixa"
+										}, {
+											key: "variavel",
+											label: "Variável"
+										}].map((t) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											onClick: () => setTaxaTipo(t.key),
+											className: `flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${taxaTipo === t.key ? "bg-[color:var(--color-brand-gold)] text-[color:var(--color-brand-navy)]" : "text-white/70 hover:text-white"}`,
+											children: t.label
+										}, t.key))
+									})] }), taxaTipo === "fixa" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center justify-between rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10",
 										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "text-xs font-semibold uppercase tracking-widest text-white/60",
-											children: "Taxa de juro"
+											className: "text-sm text-white/70",
+											children: "Taxa de juro (fixa)"
 										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-											className: "text-3xl font-extrabold text-[color:var(--color-brand-gold)] md:text-4xl",
-											children: [FIXED_RATE.toFixed(1), "%"]
+											className: "text-lg font-bold text-[color:var(--color-brand-gold)]",
+											children: [cfg.rate.toFixed(1), "%"]
 										})]
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-										className: "mt-3 text-sm text-white/50",
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "rounded-2xl bg-white/5 p-5 ring-1 ring-white/10",
 										children: [
-											"Taxa fixa atual de ",
-											FIXED_RATE.toFixed(1),
-											"% (TAN)."
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+												className: "mb-2 block text-sm font-medium text-white/70",
+												children: "Indexante Euribor"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
+												value: euriborKey,
+												onChange: (e) => setEuriborKey(e.target.value),
+												className: "w-full rounded-xl bg-white/5 px-4 py-3 text-sm font-semibold text-white ring-1 ring-white/15 outline-none transition focus:ring-[color:var(--color-brand-gold)]",
+												children: [
+													"3M",
+													"6M",
+													"12M"
+												].map((k) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("option", {
+													value: k,
+													className: "text-[color:var(--color-brand-navy)]",
+													children: [
+														EURIBOR[k].label,
+														" — ",
+														EURIBOR[k].value.toFixed(3),
+														"%"
+													]
+												}, k))
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "mt-5 flex items-center justify-between",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-sm font-medium text-white/70",
+													children: "Spread"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "flex items-center gap-3",
+													children: [
+														/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+															type: "button",
+															onClick: () => setSpread((s) => Math.max(0, +(s - .05).toFixed(2))),
+															className: "h-8 w-8 rounded-full bg-white/10 text-white transition hover:bg-white/20",
+															children: "−"
+														}),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+															className: "w-16 text-center text-base font-bold text-[color:var(--color-brand-gold)]",
+															children: [spread.toFixed(2), "%"]
+														}),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+															type: "button",
+															onClick: () => setSpread((s) => Math.min(5, +(s + .05).toFixed(2))),
+															className: "h-8 w-8 rounded-full bg-white/10 text-white transition hover:bg-white/20",
+															children: "+"
+														})
+													]
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "mt-5 grid grid-cols-3 gap-3 border-t border-white/10 pt-4",
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: "text-xs uppercase tracking-wide text-white/50",
+														children: EURIBOR[euriborKey].label
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "text-base font-bold text-[color:var(--color-brand-gold)]",
+														children: [euriborRate.toFixed(3), "%"]
+													})] }),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: "text-xs uppercase tracking-wide text-white/50",
+														children: "TAN"
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "text-base font-bold text-[color:var(--color-brand-gold)]",
+														children: [tan.toFixed(2), "%"]
+													})] }),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: "text-xs uppercase tracking-wide text-white/50",
+														children: "TAN +1,5%"
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "text-base font-bold text-[color:var(--color-brand-gold)]",
+														children: [(tan + 1.5).toFixed(2), "%"]
+													})] })
+												]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "mt-2 text-xs text-white/50",
+												children: "TAN +1,5% — cenário de stress usado pelos bancos para testar a subida de taxas."
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+												className: "mt-3 text-xs text-white/50",
+												children: [EURIBOR_REF, ". A Euribor é revista periodicamente (3, 6 ou 12 meses), pelo que a prestação pode variar."]
+											})
 										]
 									})]
+								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "mt-8",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+											className: "mb-2 block text-sm font-medium text-white/70",
+											children: "Finalidade"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
+											value: finalidade,
+											onChange: (e) => setFinalidade(e.target.value),
+											className: "w-full rounded-2xl bg-white/5 px-5 py-4 text-sm font-semibold text-white ring-1 ring-white/15 outline-none transition focus:ring-[color:var(--color-brand-gold)]",
+											children: FINALIDADES.map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+												value: f,
+												className: "text-[color:var(--color-brand-navy)]",
+												children: f
+											}, f))
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "mt-3 text-xs text-white/50",
+											children: "Taxa sob consulta — definida pelo banco após análise. A estimativa apresentada é indicativa."
+										})
+									]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 									onClick: prefillFromSimulator,
@@ -567,10 +790,10 @@ function Index() {
 									children: ["Quero pedir este financiamento", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { className: "h-4 w-4" })]
 								})
 							]
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(motion.div, {
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(motion.div, {
 							variants: fadeUp,
 							className: "lg:col-span-2 space-y-4",
-							children: [
+							children: creditType === "habitacao" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ResultCard, {
 									label: "Prestação mensal estimada",
 									value: fmtEUR(monthly),
@@ -588,7 +811,16 @@ function Index() {
 									className: "text-xs leading-relaxed text-white/50",
 									children: "Valores meramente indicativos, calculados com juros constantes. A proposta final depende da análise do banco."
 								})
-							]
+							] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "rounded-2xl bg-white/5 p-6 ring-1 ring-white/10",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-sm leading-relaxed text-white/80",
+									children: "No Crédito Pessoal a taxa de juro e a prestação mensal são definidas pelo banco após análise do pedido, consoante a finalidade e o perfil do cliente."
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-3 text-xs text-white/50",
+									children: "Preencha o formulário para receber uma proposta personalizada sem compromisso."
+								})]
+							})
 						})]
 					})]
 				})]
@@ -682,11 +914,11 @@ function Index() {
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
 									className: "mt-6 text-2xl font-bold",
-									children: "Pedido recebido com sucesso!"
+									children: "Pedido recebido"
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 									className: "mt-2 text-[color:var(--color-brand-navy)]/70",
-									children: "\"Obrigado pelo seu interesse. Entraremos em contacto o mais brevemente possível.\""
+									children: "A sua análise será iniciada em breve."
 								})
 							]
 						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
@@ -746,8 +978,21 @@ function Index() {
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { children: "Crédito Habitação" }),
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { children: "Transferência" }),
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { children: "Consolidado" }),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { children: "Consumo" })
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { children: "Crédito Pessoal" })
 										]
+									})
+								}),
+								form.tipo === "Crédito Pessoal" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Finalidade",
+									full: true,
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
+										value: form.finalidade,
+										onChange: (e) => setForm({
+											...form,
+											finalidade: e.target.value
+										}),
+										className: inputCls,
+										children: FINALIDADES.map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { children: f }, f))
 									})
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
@@ -763,12 +1008,15 @@ function Index() {
 									})
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-									label: "Taxa de Juro (%)",
+									label: "Prazo (anos)",
 									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
 										type: "number",
-										readOnly: true,
-										value: form.taxa,
-										className: `${inputCls} bg-black/5`
+										value: form.prazo,
+										onChange: (e) => setForm({
+											...form,
+											prazo: Number(e.target.value)
+										}),
+										className: inputCls
 									})
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
@@ -819,22 +1067,21 @@ function Index() {
 										"."
 									]
 								}),
-								error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "md:col-span-2 rounded-lg bg-red-50 p-4 text-sm text-red-600",
-									children: error
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 									className: "md:col-span-2",
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 										type: "submit",
-										disabled: loading,
-										className: "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-navy)] px-6 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--color-brand-navy-soft)] disabled:opacity-50",
+										disabled: sending,
+										className: "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-navy)] px-6 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--color-brand-navy-soft)] disabled:opacity-60",
 										children: [
-											loading ? "Enviando..." : "Enviar Pedido",
+											sending ? "A enviar…" : "Enviar Pedido",
 											" ",
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { className: "h-4 w-4" })
 										]
-									})
+									}), sendError && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "mt-3 text-sm text-red-600",
+										children: sendError
+									})]
 								})
 							]
 						})
@@ -881,12 +1128,17 @@ function Index() {
 							})
 						]
 					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(motion.p, {
+						variants: fadeUp,
+						className: "mt-8 text-center text-sm text-[color:var(--color-brand-navy)]/70",
+						children: "Atendimento online para todo o território nacional. Atendimento presencial apenas por marcação."
+					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(motion.div, {
 						variants: fadeUp,
 						className: "mt-10 overflow-hidden rounded-3xl shadow-lg ring-1 ring-black/5",
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("iframe", {
 							title: "Localização",
-							src: "https://www.google.com/maps?q=Rio+de+Moinhos,+Penafiel&output=embed",
+							src: "https://www.google.com/maps?q=Rio+de+Moinhos,+Penafiel,+Portugal&output=embed",
 							width: "100%",
 							height: "360",
 							loading: "lazy",
@@ -916,7 +1168,7 @@ function Index() {
 						children: [
 							{
 								q: "O serviço é pago?",
-								a: "Não. É totalmente gratuito para o cliente."
+								a: "Não. O serviço de intermediação de crédito é gratuito por lei. A gratuitidade diz respeito apenas à intermediação, não incluindo eventuais custos, comissões ou encargos associados ao contrato de crédito."
 							},
 							{
 								q: "Quanto demora?",
@@ -928,7 +1180,7 @@ function Index() {
 							},
 							{
 								q: "Trabalham com vários bancos?",
-								a: "Sim. Comparamos propostas entre as instituições mutuantes com quem trabalhamos."
+								a: "Sim. Apresentamos opções com base nas entidades mutuantes com quem temos acordo, comparando as propostas disponíveis."
 							}
 						].map((item, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FAQItem, {
 							q: item.q,
@@ -957,8 +1209,15 @@ function Index() {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(LegalRow, {
 							title: "Estatuto",
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: [
-								"Intermediária de Crédito Vinculada. Registada no Banco de Portugal sob o nº ",
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "8612" }),
+								"Intermediária de Crédito Vinculada. Registada no Banco de Portugal sob o nº",
+								" ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+									href: "https://www.bportugal.pt/intermediarios-credito",
+									target: "_blank",
+									rel: "noreferrer",
+									className: "font-bold text-[color:var(--color-brand-gold)] underline underline-offset-2 hover:text-[color:var(--color-brand-navy)]",
+									children: "8612"
+								}),
 								"."
 							] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 								className: "mt-2 text-sm text-[color:var(--color-brand-navy)]/60",
@@ -968,6 +1227,10 @@ function Index() {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LegalRow, {
 							title: "Categoria",
 							children: "Intermediária de crédito vinculada."
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LegalRow, {
+							title: "NIF",
+							children: "215735269"
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LegalRow, {
 							title: "Mutuantes",
@@ -985,6 +1248,18 @@ function Index() {
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 										className: "flex items-center gap-2",
 										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Landmark, { className: "h-4 w-4 text-[color:var(--color-brand-gold)]" }), " CAIXA GERAL DE DEPÓSITOS"]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+										className: "flex items-center gap-2",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Landmark, { className: "h-4 w-4 text-[color:var(--color-brand-gold)]" }), " BANKINTER"]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+										className: "flex items-center gap-2",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Landmark, { className: "h-4 w-4 text-[color:var(--color-brand-gold)]" }), " BBVA "]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+										className: "flex items-center gap-2",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Landmark, { className: "h-4 w-4 text-[color:var(--color-brand-gold)]" }), " UNION DE CRÉDITOS INMOBILIÁRIOS, S.A., ESTABLECIMIENTO FINANCIERO DE CRÉDITO (SOCIEDAD UNIPERSONAL) - SUCURSAL EM PORTUGAL"]
 									})
 								]
 							})
@@ -1015,13 +1290,22 @@ function Index() {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(LegalRow, {
 							title: "Resolução Alternativa de Litígios",
 							full: true,
-							children: [
-								"Em caso de litígio de consumo, o consumidor poderá recorrer ao ",
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "CNIACC" }),
-								" ou à ",
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "TRIAVE" }),
-								" para resolução alternativa de litígios."
-							]
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Em caso de litígio de consumo, o consumidor poderá recorrer às seguintes entidades de resolução alternativa de litígios:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "mt-3 flex flex-wrap gap-3",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+									href: "https://www.cniacc.pt/pt/",
+									target: "_blank",
+									rel: "noreferrer",
+									className: "inline-flex items-center gap-2 rounded-full border border-[color:var(--color-brand-navy)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--color-brand-navy)] transition hover:border-[color:var(--color-brand-gold)] hover:text-[color:var(--color-brand-gold)]",
+									children: ["CNIACC ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { className: "h-3.5 w-3.5" })]
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+									href: "https://www.triave.pt/",
+									target: "_blank",
+									rel: "noreferrer",
+									className: "inline-flex items-center gap-2 rounded-full border border-[color:var(--color-brand-navy)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--color-brand-navy)] transition hover:border-[color:var(--color-brand-gold)] hover:text-[color:var(--color-brand-gold)]",
+									children: ["TRIAVE ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { className: "h-3.5 w-3.5" })]
+								})]
+							})]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							className: "md:col-span-2",
@@ -1101,8 +1385,8 @@ function Index() {
 									className: "hover:text-[color:var(--color-brand-gold)]",
 									children: "Contactos"
 								}) }),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
-									to: "/politica-privacidade",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+									href: "#rgpd",
 									className: "hover:text-[color:var(--color-brand-gold)]",
 									children: "Política de Privacidade"
 								}) }),
@@ -1123,22 +1407,22 @@ function Index() {
 							children: [
 								{
 									icon: Facebook,
-									href: "https://www.facebook.com/profile.php?id=100069896976304",
+									href: "#",
 									label: "Facebook"
 								},
 								{
 									icon: Instagram,
-									href: "https://www.instagram.com/ecr_credito/",
+									href: "#",
 									label: "Instagram"
 								},
 								{
 									icon: MessageCircle,
-									href: "https://wa.me/351912230198",
+									href: WHATSAPP_URL,
 									label: "WhatsApp"
 								},
 								{
 									icon: Mail,
-									href: "mailto:elisabete@ecrcredito.pt",
+									href: `mailto:${EMAIL}`,
 									label: "Email"
 								}
 							].map(({ icon: Icon, href, label }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
@@ -1153,11 +1437,22 @@ function Index() {
 					]
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "border-t border-white/10 py-6 text-center text-xs text-white/50",
-					children: [
-						"© ",
-						(/* @__PURE__ */ new Date()).getFullYear(),
-						" ECR Crédito — Intermediária de Crédito Vinculada · Reg. Banco de Portugal nº 8612"
-					]
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "A ECR não concede crédito. Atua como intermediária de crédito vinculada, nos termos do Decreto-Lei nº 81-C/2017." }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+						className: "mt-2",
+						children: [
+							"© ",
+							(/* @__PURE__ */ new Date()).getFullYear(),
+							" ECR Crédito · NIF 215735269 · Reg. Banco de Portugal nº",
+							" ",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+								href: "https://www.bportugal.pt/intermediarios-credito",
+								target: "_blank",
+								rel: "noreferrer",
+								className: "underline underline-offset-2 hover:text-[color:var(--color-brand-gold)]",
+								children: "8612"
+							})
+						]
+					})]
 				})]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
