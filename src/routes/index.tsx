@@ -711,7 +711,8 @@ function Index() {
               <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> BANCO SANTANDER TOTTA</li>
               <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> CAIXA GERAL DE DEPÓSITOS</li>
               <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> BANKINTER</li>
-              <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> BBVA — INSTITUIÇÃO FINANCEIRA DE CRÉDITO, S.A.</li>
+              <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> BBVA </li>
+              <li className="flex items-center gap-2"><Landmark className="h-4 w-4 text-[color:var(--color-brand-gold)]" /> UNION DE CRÉDITOS INMOBILIÁRIOS, S.A., ESTABLECIMIENTO FINANCIERO DE CRÉDITO (SOCIEDAD UNIPERSONAL) - SUCURSAL EM PORTUGAL</li>
             </ul>
           </LegalRow>
           <LegalRow title="Regime de exclusividade">Não.</LegalRow>
