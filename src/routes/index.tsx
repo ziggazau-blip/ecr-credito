@@ -723,7 +723,7 @@ function Index() {
           <LegalRow title="Seguro de Responsabilidade Civil">
             Hiscox S.A. — Sucursal em Portugal.<br />
             Apólices: 2555010 e 2555012.<br />
-            Validade: 08/10/2025 a 07/10/2026.
+            Validade: 08/10/2026 a 07/10/2027.
           </LegalRow>
           <LegalRow title="Resolução Alternativa de Litígios" full>
             <p>Em caso de litígio de consumo, o consumidor poderá recorrer às seguintes entidades de resolução alternativa de litígios:</p>
